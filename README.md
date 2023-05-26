@@ -20,10 +20,10 @@ This package is powered by [NVIDIA Isaac Transport for ROS (NITROS)](https://dev
 
 The following table summarizes the per-platform performance statistics of sample graphs that use this package, with links included to the full benchmark output. These benchmark configurations are taken from the [Isaac ROS Benchmark](https://github.com/NVIDIA-ISAAC-ROS/isaac_ros_benchmark#list-of-isaac-ros-benchmarks) collection, based on the [`ros2_benchmark`](https://github.com/NVIDIA-ISAAC-ROS/ros2_benchmark) framework.
 
-| Sample Graph                                                                                                                                  | Input Size | AGX Orin                                                                                                                                     | Orin NX                                                                                                                                      | Orin Nano 8GB                                                                                                                                      | x86_64 w/ RTX 3060 Ti                                                                                                                                  |
-| --------------------------------------------------------------------------------------------------------------------------------------------- | ---------- | -------------------------------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------ |
-| [Freespace Segmentation Node](https://github.com/NVIDIA-ISAAC-ROS/isaac_ros_benchmark/blob/main/scripts//isaac_ros_bi3d_fs_node.py)   | 576p       | [1680 fps](https://github.com/NVIDIA-ISAAC-ROS/isaac_ros_benchmark/blob/main/results/isaac_ros_bi3d_fs_node-agx_orin.json)<br>1.1 ms | [1240 fps](https://github.com/NVIDIA-ISAAC-ROS/isaac_ros_benchmark/blob/main/results/isaac_ros_bi3d_fs_node-orin_nx.json)<br>1.3 ms  | [926 fps](https://github.com/NVIDIA-ISAAC-ROS/isaac_ros_benchmark/blob/main/results/isaac_ros_bi3d_fs_node-orin_nano_8gb.json)<br>1.7 ms   | [2830 fps](https://github.com/NVIDIA-ISAAC-ROS/isaac_ros_benchmark/blob/main/results/isaac_ros_bi3d_fs_node-x86_64_rtx_3060Ti.json)<br>0.31 ms |
-| [Freespace Segmentation Graph](https://github.com/NVIDIA-ISAAC-ROS/isaac_ros_benchmark/blob/main/scripts//isaac_ros_bi3d_fs_graph.py) | 576p       | [53.7 fps](https://github.com/NVIDIA-ISAAC-ROS/isaac_ros_benchmark/blob/main/results/isaac_ros_bi3d_fs_graph-agx_orin.json)<br>41 ms | [28.1 fps](https://github.com/NVIDIA-ISAAC-ROS/isaac_ros_benchmark/blob/main/results/isaac_ros_bi3d_fs_graph-orin_nx.json)<br>120 ms | [19.4 fps](https://github.com/NVIDIA-ISAAC-ROS/isaac_ros_benchmark/blob/main/results/isaac_ros_bi3d_fs_graph-orin_nano_8gb.json)<br>100 ms | [167 fps](https://github.com/NVIDIA-ISAAC-ROS/isaac_ros_benchmark/blob/main/results/isaac_ros_bi3d_fs_graph-x86_64_rtx_3060Ti.json)<br>26 ms   |
+| Sample Graph                                                                                                                                  | Input Size | AGX Orin                                                                                                                                     | Orin NX                                                                                                                                      | Orin Nano 8GB                                                                                                                                  | x86_64 w/ RTX 4060 Ti                                                                                                                           |
+| --------------------------------------------------------------------------------------------------------------------------------------------- | ---------- | -------------------------------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------- |
+| [Freespace Segmentation Node](https://github.com/NVIDIA-ISAAC-ROS/isaac_ros_benchmark/blob/main/scripts//isaac_ros_bi3d_fs_node.py)   | 576p       | [1800 fps](https://github.com/NVIDIA-ISAAC-ROS/isaac_ros_benchmark/blob/main/results/isaac_ros_bi3d_fs_node-agx_orin.json)<br>1.5 ms | [1710 fps](https://github.com/NVIDIA-ISAAC-ROS/isaac_ros_benchmark/blob/main/results/isaac_ros_bi3d_fs_node-orin_nx.json)<br>1.8 ms  | [1140 fps](https://github.com/NVIDIA-ISAAC-ROS/isaac_ros_benchmark/blob/main/results/isaac_ros_bi3d_fs_node-orin_nano.json)<br>2.1 ms  | [3500 fps](https://github.com/NVIDIA-ISAAC-ROS/isaac_ros_benchmark/blob/main/results/isaac_ros_bi3d_fs_node-nuc_4060ti.json)<br>0.36 ms |
+| [Freespace Segmentation Graph](https://github.com/NVIDIA-ISAAC-ROS/isaac_ros_benchmark/blob/main/scripts//isaac_ros_bi3d_fs_graph.py) | 576p       | [54.0 fps](https://github.com/NVIDIA-ISAAC-ROS/isaac_ros_benchmark/blob/main/results/isaac_ros_bi3d_fs_graph-agx_orin.json)<br>36 ms | [28.4 fps](https://github.com/NVIDIA-ISAAC-ROS/isaac_ros_benchmark/blob/main/results/isaac_ros_bi3d_fs_graph-orin_nx.json)<br>120 ms | [23.6 fps](https://github.com/NVIDIA-ISAAC-ROS/isaac_ros_benchmark/blob/main/results/isaac_ros_bi3d_fs_graph-orin_nano.json)<br>140 ms | [178 fps](https://github.com/NVIDIA-ISAAC-ROS/isaac_ros_benchmark/blob/main/results/isaac_ros_bi3d_fs_graph-nuc_4060ti.json)<br>30 ms   |
 
 
 ## Table of Contents
@@ -52,7 +52,7 @@ The following table summarizes the per-platform performance statistics of sample
 
 ## Latest Update
 
-Update 2023-04-05: Initial release
+Update 2023-05-25: Performance improvements.
 
 ## Supported Platforms
 
@@ -248,6 +248,7 @@ Check [here](https://github.com/NVIDIA-ISAAC-ROS/isaac_ros_dnn_inference/blob/ma
 
 ## Updates
 
-| Date       | Changes         |
-| ---------- | --------------- |
-| 2023-04-05 | Initial release |
+| Date       | Changes                  |
+| ---------- | ------------------------ |
+| 2023-05-25 | Performance improvements |
+| 2023-04-05 | Initial release          |

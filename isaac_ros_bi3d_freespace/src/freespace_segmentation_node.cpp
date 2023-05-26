@@ -1,5 +1,5 @@
 // SPDX-FileCopyrightText: NVIDIA CORPORATION & AFFILIATES
-// Copyright (c) 2022 NVIDIA CORPORATION & AFFILIATES. All rights reserved.
+// Copyright (c) 2022-2023 NVIDIA CORPORATION & AFFILIATES. All rights reserved.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -37,7 +37,7 @@ constexpr char INPUT_COMPONENT_KEY[] = "freespace_segmentation/mask_in";
 constexpr char INPUT_DEFAULT_TENSOR_FORMAT[] = "nitros_disparity_image_32FC1";
 constexpr char INPUT_TOPIC_NAME[] = "bi3d_mask";
 
-constexpr char OUTPUT_COMPONENT_KEY[] = "vault/vault";
+constexpr char OUTPUT_COMPONENT_KEY[] = "sink/sink";
 constexpr char OUTPUT_DEFAULT_TENSOR_FORMAT[] = "nitros_occupancy_grid";
 constexpr char OUTPUT_TOPIC_NAME[] = "freespace_segmentation/occupancy_grid";
 
