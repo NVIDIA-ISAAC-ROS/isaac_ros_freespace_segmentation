@@ -26,7 +26,7 @@ find_package(GXF ${ISAAC_ROS_GXF_VERSION} MODULE REQUIRED
     cuda
     multimedia
 )
-include(YamlCpp)
+find_package(yaml-cpp)
 
 # Occupancy Grid Projector extension
 add_library(gxf_occupancy_grid_projector SHARED
@@ -52,3 +52,8 @@ target_link_libraries(gxf_occupancy_grid_projector
     GXF::multimedia
     yaml-cpp
 )
+
+# Disable -Wpedantic flag
+get_target_property(target_options gxf_occupancy_grid_projector COMPILE_OPTIONS)
+list(REMOVE_ITEM target_options "-Wpedantic")
+set_property(TARGET gxf_occupancy_grid_projector PROPERTY COMPILE_OPTIONS ${target_options})

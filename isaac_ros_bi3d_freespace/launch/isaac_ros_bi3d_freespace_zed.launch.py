@@ -1,5 +1,5 @@
 # SPDX-FileCopyrightText: NVIDIA CORPORATION & AFFILIATES
-# Copyright (c) 2022 NVIDIA CORPORATION & AFFILIATES. All rights reserved.
+# Copyright (c) 2023 NVIDIA CORPORATION & AFFILIATES. All rights reserved.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -21,12 +21,15 @@ from ament_index_python.packages import get_package_share_directory
 
 import launch
 from launch.actions import DeclareLaunchArgument
-from launch.substitutions import LaunchConfiguration
-from launch_ros.actions import ComposableNodeContainer
+from launch.substitutions import Command, LaunchConfiguration
+from launch_ros.actions import ComposableNodeContainer, Node
 from launch_ros.descriptions import ComposableNode
 
 
 def generate_launch_description():
+    # The zed camera mode name. zed, zed2, zed2i, zedm, zedx or zedxm
+    camera_model = 'zed2i'
+
     launch_args = [
         DeclareLaunchArgument(
             'featnet_engine_file_path',
@@ -46,15 +49,15 @@ def generate_launch_description():
             description='The name of the tf2 frame corresponding to the origin of the robot base'),
         DeclareLaunchArgument(
             'camera_frame',
-            default_value='camera_infra1_optical_frame',
+            default_value=camera_model+'_left_camera_optical_frame',
             description='The name of the tf2 frame corresponding to the camera optical center'),
         DeclareLaunchArgument(
             'f_x',
-            default_value='386.16015625',
+            default_value='468.7635803222656',
             description='The number of pixels per distance unit in the x dimension'),
         DeclareLaunchArgument(
             'f_y',
-            default_value='386.16015625',
+            default_value='476.20428466796875',
             description='The number of pixels per distance unit in the y dimension'),
         DeclareLaunchArgument(
             'grid_height',
@@ -92,13 +95,13 @@ def generate_launch_description():
                 'featnet_engine_file_path': featnet_engine_file_path,
                 'segnet_engine_file_path': segnet_engine_file_path,
                 'max_disparity_values': max_disparity_values,
-                'image_width': 640,
-                'image_height': 480}],
+                'image_width': 1280,
+                'image_height': 720}],
         remappings=[
-            ('left_image_bi3d', 'infra1/image_rect_raw'),
-            ('right_image_bi3d', 'infra2/image_rect_raw'),
-            ('left_camera_info_bi3d', 'infra1/camera_info'),
-            ('right_camera_info_bi3d', 'infra2/camera_info'),
+            ('left_image_bi3d', 'zed_node/left/image_rect_color_rgb'),
+            ('right_image_bi3d', 'zed_node/right/image_rect_color_rgb'),
+            ('left_camera_info_bi3d', 'zed_node/left/camera_info'),
+            ('right_camera_info_bi3d', 'zed_node/right/camera_info'),
             ('bi3d_node/bi3d_output', 'bi3d_mask')])
 
     image_format_converter_node_left = ComposableNode(
@@ -109,8 +112,8 @@ def generate_launch_description():
                 'encoding_desired': 'rgb8',
         }],
         remappings=[
-            ('image_raw', 'infra1/image_rect_raw_mono'),
-            ('image', 'infra1/image_rect_raw')]
+            ('image_raw', 'zed_node/left/image_rect_color'),
+            ('image', 'zed_node/left/image_rect_color_rgb')]
     )
 
     image_format_converter_node_right = ComposableNode(
@@ -121,8 +124,8 @@ def generate_launch_description():
                 'encoding_desired': 'rgb8',
         }],
         remappings=[
-            ('image_raw', 'infra2/image_rect_raw_mono'),
-            ('image', 'infra2/image_rect_raw')]
+            ('image_raw', 'zed_node/right/image_rect_color'),
+            ('image', 'zed_node/right/image_rect_color_rgb')]
     )
 
     freespace_segmentation_node = ComposableNode(
@@ -145,29 +148,59 @@ def generate_launch_description():
         plugin='tf2_ros::StaticTransformBroadcasterNode',
         parameters=[{
             'frame_id': base_link_frame,
-            'child_frame_id': 'camera_link',
+            'child_frame_id': camera_model+'_base_link',
             'translation.x': 0.0,
             'translation.y': 0.0,
-            'translation.z': 0.1,
+            'translation.z': 0.05,
             'rotation.x': 0.0,
             'rotation.y': 0.0,
             'rotation.z': 0.0,
             'rotation.w': 1.0
         }])
 
-    # RealSense
-    realsense_config_file_path = os.path.join(
-        get_package_share_directory('isaac_ros_bi3d'),
-        'config', 'realsense.yaml'
+    # URDF/xacro file to be loaded by the Robot State Publisher node
+    xacro_path = os.path.join(
+        get_package_share_directory('zed_wrapper'),
+        'urdf', 'zed_descr.urdf.xacro'
     )
 
-    realsense_node = ComposableNode(
-        package='realsense2_camera',
-        plugin='realsense2_camera::RealSenseNodeFactory',
-        parameters=[realsense_config_file_path],
-        remappings=[
-            ('infra1/image_rect_raw', 'infra1/image_rect_raw_mono'),
-            ('infra2/image_rect_raw', 'infra2/image_rect_raw_mono')
+    # ZED Configurations to be loaded by ZED Node
+    config_common = os.path.join(
+        get_package_share_directory('isaac_ros_bi3d_freespace'),
+        'config',
+        'zed.yaml'
+    )
+
+    config_camera = os.path.join(
+        get_package_share_directory('zed_wrapper'),
+        'config',
+        camera_model + '.yaml'
+    )
+
+    # Robot State Publisher node
+    rsp_node = Node(
+        package='robot_state_publisher',
+        executable='robot_state_publisher',
+        name='zed_state_publisher',
+        output='screen',
+        parameters=[{
+            'robot_description': Command(
+                [
+                    'xacro', ' ', xacro_path, ' ',
+                    'camera_name:=', camera_model, ' ',
+                    'camera_model:=', camera_model
+                ])
+        }]
+    )
+
+    # ZED node using manual composition
+    zed_node = Node(
+        package='zed_wrapper',
+        executable='zed_wrapper',
+        output='screen',
+        parameters=[
+            config_common,  # Common parameters
+            config_camera,  # Camera related parameters
         ]
     )
 
@@ -180,13 +213,18 @@ def generate_launch_description():
                                       image_format_converter_node_left,
                                       image_format_converter_node_right,
                                       freespace_segmentation_node,
-                                      tf_publisher,
-                                      realsense_node],
-        output='screen',
-        remappings=[
-            ('left_image_bi3d', 'infra1/image_rect_raw'),
-            ('right_image_bi3d', 'infra2/image_rect_raw')]
+                                      tf_publisher],
+        output='screen'
     )
 
-    final_launch_description = launch_args + [container]
-    return (launch.LaunchDescription(final_launch_description))
+    rviz_config_path = os.path.join(get_package_share_directory(
+        'isaac_ros_bi3d_freespace'), 'config', 'isaac_ros_bi3d_freespace_zed.rviz')
+
+    rviz = Node(
+        package='rviz2',
+        executable='rviz2',
+        arguments=['-d', rviz_config_path],
+        output='screen')
+
+    # Add nodes and containers to LaunchDescription
+    return (launch.LaunchDescription(launch_args + [container, rsp_node, zed_node, rviz]))
