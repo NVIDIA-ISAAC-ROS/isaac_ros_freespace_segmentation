@@ -73,7 +73,7 @@ gxf_result_t OccupancyGridProjector::start()
   // Extract 3D transform from camera frame to ground frame from parameter
   auto projection = projection_transform_param_.get();
   if (projection.size() != 7) {
-    GXF_LOG_ERROR("Expected 3D transform vector to be length 7 but got %u", projection.size());
+    GXF_LOG_ERROR("Expected 3D transform vector to be length 7 but got %lu", projection.size());
     return GXF_FAILURE;
   }
   auto translation =
@@ -117,7 +117,7 @@ gxf_result_t OccupancyGridProjector::start()
   // Extract camera intrinsics from parameter
   auto intrinsics = intrinsics_param_.get();
   if (intrinsics.size() != 2) {
-    GXF_LOG_ERROR("Expected intrinsics vector to be length 2 but got %u", intrinsics.size());
+    GXF_LOG_ERROR("Expected intrinsics vector to be length 2 but got %lu", intrinsics.size());
     return GXF_FAILURE;
   }
   f_x_ = static_cast<float>(intrinsics.at(0));
@@ -153,7 +153,7 @@ gxf_result_t OccupancyGridProjector::tick()
     return gxf::ToResultCode(maybe_mask_message);
   }
 
-  const auto maybe_mask = maybe_mask_message.value().get<gxf::VideoBuffer>();
+  const auto maybe_mask = maybe_mask_message.value().get<gxf::VideoBuffer>("frame");
   if (!maybe_mask) {
     return gxf::ToResultCode(maybe_mask);
   }

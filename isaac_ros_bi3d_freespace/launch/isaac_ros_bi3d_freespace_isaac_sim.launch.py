@@ -45,18 +45,18 @@ def generate_launch_description():
             description='The name of the tf2 frame corresponding to the origin of the robot base'),
         DeclareLaunchArgument(
             'camera_frame',
-            default_value='carter_camera_stereo_left',
+            default_value='front_stereo_camera:left_rgb',
             description='The name of the tf2 frame corresponding to the camera center'),
 
         # f(mm) / sensor width (mm) = f(pixels) / image width(pixels)
 
         DeclareLaunchArgument(
             'f_x',
-            default_value='1465.99853515625',
+            default_value='478.9057',
             description='The number of pixels per distance unit in the x dimension'),
         DeclareLaunchArgument(
             'f_y',
-            default_value='1468.2335205078125',
+            default_value='459.7495',
             description='The number of pixels per distance unit in the y dimension'),
         DeclareLaunchArgument(
             'grid_height',
@@ -86,6 +86,38 @@ def generate_launch_description():
     grid_width = LaunchConfiguration('grid_width')
     grid_resolution = LaunchConfiguration('grid_resolution')
 
+    image_resize_node_right = ComposableNode(
+        package='isaac_ros_image_proc',
+        plugin='nvidia::isaac_ros::image_proc::ResizeNode',
+        name='image_resize_node_right',
+        parameters=[{
+                'output_width': 960,
+                'output_height': 576,
+                'encoding_desired': 'rgb8',
+        }],
+        remappings=[
+            ('camera_info', 'front_stereo_camera/right_rgb/camerainfo'),
+            ('image', 'front_stereo_camera/right_rgb/image_raw'),
+            ('resize/camera_info', 'front_stereo_camera/right_rgb/camerainfo_resize'),
+            ('resize/image', 'front_stereo_camera/right_rgb/image_resize')]
+    )
+
+    image_resize_node_left = ComposableNode(
+        package='isaac_ros_image_proc',
+        plugin='nvidia::isaac_ros::image_proc::ResizeNode',
+        name='image_resize_node_left',
+        parameters=[{
+                'output_width': 960,
+                'output_height': 576,
+                'encoding_desired': 'rgb8',
+        }],
+        remappings=[
+            ('camera_info', 'front_stereo_camera/left_rgb/camerainfo'),
+            ('image', 'front_stereo_camera/left_rgb/image_raw'),
+            ('resize/camera_info', 'front_stereo_camera/left_rgb/camerainfo_resize'),
+            ('resize/image', 'front_stereo_camera/left_rgb/image_resize')]
+    )
+
     bi3d_node = ComposableNode(
         name='bi3d_node',
         package='isaac_ros_bi3d',
@@ -94,12 +126,15 @@ def generate_launch_description():
                 'featnet_engine_file_path': featnet_engine_file_path,
                 'segnet_engine_file_path': segnet_engine_file_path,
                 'max_disparity_values': max_disparity_values,
-                'disparity_values': [3, 6, 9, 12, 15, 18, 21, 24, 27, 30],
-                'use_sim_time': True
-        }],
+                'disparity_values': [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 20, 30, 40, 50, 60],
+                'image_width': 960,
+                'image_height': 576
+                }],
         remappings=[('bi3d_node/bi3d_output', 'bi3d_mask'),
-                    ('left_image_bi3d', 'rgb_left'),
-                    ('right_image_bi3d', 'rgb_right')]
+                    ('left_image_bi3d', 'front_stereo_camera/left_rgb/image_resize'),
+                    ('left_camera_info_bi3d', 'front_stereo_camera/left_rgb/camerainfo_resize'),
+                    ('right_image_bi3d', 'front_stereo_camera/right_rgb/image_resize'),
+                    ('right_camera_info_bi3d', 'front_stereo_camera/right_rgb/camerainfo_resize')]
     )
 
     freespace_segmentation_node = ComposableNode(
@@ -124,7 +159,9 @@ def generate_launch_description():
         executable='component_container_mt',
         composable_node_descriptions=[
             bi3d_node,
-            freespace_segmentation_node
+            freespace_segmentation_node,
+            image_resize_node_right,
+            image_resize_node_left
         ],
         output='screen',
         arguments=['--ros-args', '--log-level', 'info',

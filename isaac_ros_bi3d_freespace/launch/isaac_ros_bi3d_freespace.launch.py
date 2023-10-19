@@ -34,7 +34,7 @@ def generate_launch_description():
             description='The absolute path to the Bi3D Segnet TensorRT engine plan'),
         DeclareLaunchArgument(
             'rosbag_path',
-            default_value='src/isaac_ros_proximity_segmentation/resources/rosbags/bi3dnode_rosbag',
+            default_value='src/isaac_ros_depth_segmentation/resources/rosbags/bi3dnode_rosbag',
             description='Path to the rosbag file'),
         DeclareLaunchArgument(
             'max_disparity_values',
@@ -97,7 +97,9 @@ def generate_launch_description():
                 'use_sim_time': True}],
         remappings=[('bi3d_node/bi3d_output', 'bi3d_mask'),
                     ('left_image_bi3d', 'rgb_left'),
-                    ('right_image_bi3d', 'rgb_right')]
+                    ('right_image_bi3d', 'rgb_right'),
+                    ('left_camera_info_bi3d', 'camera_info_left'),
+                    ('right_camera_info_bi3d', 'camera_info_right')]
     )
 
     freespace_segmentation_node = ComposableNode(
