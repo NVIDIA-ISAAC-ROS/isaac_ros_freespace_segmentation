@@ -1,5 +1,5 @@
 // SPDX-FileCopyrightText: NVIDIA CORPORATION & AFFILIATES
-// Copyright (c) 2022-2023 NVIDIA CORPORATION & AFFILIATES. All rights reserved.
+// Copyright (c) 2022-2024 NVIDIA CORPORATION & AFFILIATES. All rights reserved.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -23,7 +23,7 @@
 
 #include "gxf/std/codelet.hpp"
 #include "gxf/std/memory_buffer.hpp"
-#include "gxf/std/parameter_parser_std.hpp"
+#include "gxf/core/parameter_parser_std.hpp"
 #include "gxf/std/receiver.hpp"
 #include "gxf/std/transmitter.hpp"
 
