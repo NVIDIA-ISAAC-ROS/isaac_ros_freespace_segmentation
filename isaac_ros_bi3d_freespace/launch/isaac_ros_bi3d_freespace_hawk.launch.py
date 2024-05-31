@@ -15,13 +15,10 @@
 #
 # SPDX-License-Identifier: Apache-2.0
 
-import os
-
-from ament_index_python.packages import get_package_share_directory
 import launch
 from launch.actions import DeclareLaunchArgument
 from launch.substitutions import LaunchConfiguration
-from launch_ros.actions import ComposableNodeContainer, Node
+from launch_ros.actions import ComposableNodeContainer
 from launch_ros.descriptions import ComposableNode
 
 
@@ -45,11 +42,8 @@ def generate_launch_description():
             description='The name of the tf2 frame corresponding to the origin of the robot base'),
         DeclareLaunchArgument(
             'camera_frame',
-            default_value='front_stereo_camera:left_rgb',
+            default_value='left_cam',
             description='The name of the tf2 frame corresponding to the camera center'),
-
-        # f(mm) / sensor width (mm) = f(pixels) / image width(pixels)
-
         DeclareLaunchArgument(
             'f_x',
             default_value='478.9057',
@@ -70,7 +64,13 @@ def generate_launch_description():
             'grid_resolution',
             default_value='0.01',
             description='The desired resolution of the occupancy grid, in m/cell'),
+        DeclareLaunchArgument(
+            'module_id',
+            default_value='2',
+            description='Index specifying the stereo camera module to use.'),
     ]
+
+    module_id = LaunchConfiguration('module_id')
 
     # Bi3DNode parameters
     featnet_engine_file_path = LaunchConfiguration('featnet_engine_file_path')
@@ -86,36 +86,43 @@ def generate_launch_description():
     grid_width = LaunchConfiguration('grid_width')
     grid_resolution = LaunchConfiguration('grid_resolution')
 
-    image_resize_node_right = ComposableNode(
-        package='isaac_ros_image_proc',
-        plugin='nvidia::isaac_ros::image_proc::ResizeNode',
-        name='image_resize_node_right',
-        parameters=[{
-                'output_width': 960,
-                'output_height': 576,
-                'encoding_desired': 'rgb8',
-        }],
-        remappings=[
-            ('camera_info', 'front_stereo_camera/right_rgb/camerainfo'),
-            ('image', 'front_stereo_camera/right_rgb/image_raw'),
-            ('resize/camera_info', 'front_stereo_camera/right_rgb/camerainfo_resize'),
-            ('resize/image', 'front_stereo_camera/right_rgb/image_resize')]
+    argus_stereo_node = ComposableNode(
+        name='argus_stereo',
+        package='isaac_ros_argus_camera',
+        plugin='nvidia::isaac_ros::argus::ArgusStereoNode',
+        parameters=[{'module_id': module_id}],
     )
 
-    image_resize_node_left = ComposableNode(
+    left_rectify_node = ComposableNode(
+        name='left_rectify_node',
         package='isaac_ros_image_proc',
-        plugin='nvidia::isaac_ros::image_proc::ResizeNode',
-        name='image_resize_node_left',
+        plugin='nvidia::isaac_ros::image_proc::RectifyNode',
         parameters=[{
-                'output_width': 960,
-                'output_height': 576,
-                'encoding_desired': 'rgb8',
+            'output_width': 960,
+            'output_height': 576,
         }],
         remappings=[
-            ('camera_info', 'front_stereo_camera/left_rgb/camerainfo'),
-            ('image', 'front_stereo_camera/left_rgb/image_raw'),
-            ('resize/camera_info', 'front_stereo_camera/left_rgb/camerainfo_resize'),
-            ('resize/image', 'front_stereo_camera/left_rgb/image_resize')]
+            ('image_raw', 'left/image_raw'),
+            ('camera_info', 'left/camera_info'),
+            ('image_rect', 'left/image_rect'),
+            ('camera_info_rect', 'left/camera_info')
+        ]
+    )
+
+    right_rectify_node = ComposableNode(
+        name='right_rectify_node',
+        package='isaac_ros_image_proc',
+        plugin='nvidia::isaac_ros::image_proc::RectifyNode',
+        parameters=[{
+            'output_width': 960,
+            'output_height': 576,
+        }],
+        remappings=[
+            ('image_raw', 'right/image_raw'),
+            ('camera_info', 'right/camera_info'),
+            ('image_rect', 'right/image_rect'),
+            ('camera_info_rect', 'right/camera_info')
+        ]
     )
 
     bi3d_node = ComposableNode(
@@ -126,16 +133,12 @@ def generate_launch_description():
                 'featnet_engine_file_path': featnet_engine_file_path,
                 'segnet_engine_file_path': segnet_engine_file_path,
                 'max_disparity_values': max_disparity_values,
-                'disparity_values': [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 20, 30, 40, 50, 60],
-                'image_width': 960,
-                'image_height': 576
-        }],
+                }],
         remappings=[('bi3d_node/bi3d_output', 'bi3d_mask'),
-                    ('left_image_bi3d', 'front_stereo_camera/left_rgb/image_resize'),
-                    ('left_camera_info_bi3d',
-                     'front_stereo_camera/left_rgb/camerainfo_resize'),
-                    ('right_image_bi3d', 'front_stereo_camera/right_rgb/image_resize'),
-                    ('right_camera_info_bi3d', 'front_stereo_camera/right_rgb/camerainfo_resize')]
+                    ('left_image_bi3d', 'left/image_rect'),
+                    ('left_camera_info_bi3d', 'right/camera_info'),
+                    ('right_image_bi3d', 'right/image_rect'),
+                    ('right_camera_info_bi3d', 'right/camera_info')]
     )
 
     freespace_segmentation_node = ComposableNode(
@@ -153,6 +156,22 @@ def generate_launch_description():
             'use_sim_time': True
         }])
 
+    tf_publisher = ComposableNode(
+        name='static_transform_publisher',
+        package='tf2_ros',
+        plugin='tf2_ros::StaticTransformBroadcasterNode',
+        parameters=[{
+            'frame_id': base_link_frame,
+            'child_frame_id': 'camera',
+            'translation.x': 0.0,
+            'translation.y': 0.0,
+            'translation.z': 0.1,
+            'rotation.x': 0.0,
+            'rotation.y': 0.0,
+            'rotation.z': 0.0,
+            'rotation.w': 1.0
+        }])
+
     container = ComposableNodeContainer(
         name='bi3d_freespace_container',
         namespace='bi3d_freespace',
@@ -161,8 +180,10 @@ def generate_launch_description():
         composable_node_descriptions=[
             bi3d_node,
             freespace_segmentation_node,
-            image_resize_node_right,
-            image_resize_node_left
+            left_rectify_node,
+            right_rectify_node,
+            argus_stereo_node,
+            tf_publisher
         ],
         output='screen',
         arguments=['--ros-args', '--log-level', 'info',
@@ -172,14 +193,5 @@ def generate_launch_description():
                    ],
     )
 
-    rviz_config_path = os.path.join(get_package_share_directory(
-        'isaac_ros_bi3d_freespace'), 'config', 'isaac_ros_bi3d_freespace_isaac_sim.rviz')
-
-    rviz_node = Node(
-        package='rviz2',
-        executable='rviz2',
-        arguments=['-d', rviz_config_path],
-        output='screen')
-
-    final_launch_description = launch_args + [container, rviz_node]
+    final_launch_description = launch_args + [container]
     return (launch.LaunchDescription(final_launch_description))

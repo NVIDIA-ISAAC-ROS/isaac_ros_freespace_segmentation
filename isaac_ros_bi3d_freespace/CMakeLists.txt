@@ -1,5 +1,5 @@
 # SPDX-FileCopyrightText: NVIDIA CORPORATION & AFFILIATES
-# Copyright (c) 2022 NVIDIA CORPORATION & AFFILIATES. All rights reserved.
+# Copyright (c) 2022-2024 NVIDIA CORPORATION & AFFILIATES. All rights reserved.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -29,19 +29,23 @@ ament_auto_find_build_dependencies()
 ament_auto_add_library(freespace_segmentation_node SHARED src/freespace_segmentation_node.cpp)
 rclcpp_components_register_nodes(freespace_segmentation_node "nvidia::isaac_ros::bi3d_freespace::FreespaceSegmentationNode")
 set(node_plugins "${node_plugins}nvidia::isaac_ros::bi3d_freespace::FreespaceSegmentationNode;$<TARGET_FILE:freespace_segmentation_node>\n")
-
-### Install extensions built from source
-
-# Bi3D Freespace
-add_subdirectory(gxf/bi3d_freespace)
-install(TARGETS gxf_occupancy_grid_projector DESTINATION share/${PROJECT_NAME}/gxf/lib/bi3d_freespace)
-
-### End extensions
+set_target_properties(freespace_segmentation_node PROPERTIES
+  BUILD_WITH_INSTALL_RPATH TRUE
+  BUILD_RPATH_USE_ORIGIN TRUE
+  INSTALL_RPATH_USE_LINK_PATH TRUE
+)
 
 if(BUILD_TESTING)
   find_package(ament_lint_auto REQUIRED)
   ament_lint_auto_find_test_dependencies()
 
+  # Gtest for freespace segmentation node
+  ament_add_gtest(freespace_segmentation_node_test test/freespace_segmentation_node_test.cpp)
+  target_link_libraries(freespace_segmentation_node_test freespace_segmentation_node)
+  target_include_directories(freespace_segmentation_node_test PUBLIC include/isaac_ros_bi3d_freespace/)
+  target_include_directories(freespace_segmentation_node_test PUBLIC /usr/src/googletest/googlemock/include/)
+  ament_target_dependencies(freespace_segmentation_node_test rclcpp)
+  ament_target_dependencies(freespace_segmentation_node_test isaac_ros_nitros)
 
   # The FindPythonInterp and FindPythonLibs modules are removed
   if(POLICY CMP0148)
