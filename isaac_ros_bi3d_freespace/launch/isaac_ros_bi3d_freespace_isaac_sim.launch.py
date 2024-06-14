@@ -45,7 +45,7 @@ def generate_launch_description():
             description='The name of the tf2 frame corresponding to the origin of the robot base'),
         DeclareLaunchArgument(
             'camera_frame',
-            default_value='front_stereo_camera:left_rgb',
+            default_value='front_stereo_camera_left_optical',
             description='The name of the tf2 frame corresponding to the camera center'),
 
         # f(mm) / sensor width (mm) = f(pixels) / image width(pixels)
@@ -96,10 +96,10 @@ def generate_launch_description():
                 'encoding_desired': 'rgb8',
         }],
         remappings=[
-            ('camera_info', 'front_stereo_camera/right_rgb/camerainfo'),
-            ('image', 'front_stereo_camera/right_rgb/image_raw'),
-            ('resize/camera_info', 'front_stereo_camera/right_rgb/camerainfo_resize'),
-            ('resize/image', 'front_stereo_camera/right_rgb/image_resize')]
+            ('camera_info', 'front_stereo_camera/right/camera_info'),
+            ('image', 'front_stereo_camera/right/image_rect_color'),
+            ('resize/camera_info', 'front_stereo_camera/right/camera_info_resize'),
+            ('resize/image', 'front_stereo_camera/right/image_resize')]
     )
 
     image_resize_node_left = ComposableNode(
@@ -112,10 +112,10 @@ def generate_launch_description():
                 'encoding_desired': 'rgb8',
         }],
         remappings=[
-            ('camera_info', 'front_stereo_camera/left_rgb/camerainfo'),
-            ('image', 'front_stereo_camera/left_rgb/image_raw'),
-            ('resize/camera_info', 'front_stereo_camera/left_rgb/camerainfo_resize'),
-            ('resize/image', 'front_stereo_camera/left_rgb/image_resize')]
+            ('camera_info', 'front_stereo_camera/left/camera_info'),
+            ('image', 'front_stereo_camera/left/image_rect_color'),
+            ('resize/camera_info', 'front_stereo_camera/left/camera_info_resize'),
+            ('resize/image', 'front_stereo_camera/left/image_resize')]
     )
 
     bi3d_node = ComposableNode(
@@ -131,11 +131,11 @@ def generate_launch_description():
                 'image_height': 576
         }],
         remappings=[('bi3d_node/bi3d_output', 'bi3d_mask'),
-                    ('left_image_bi3d', 'front_stereo_camera/left_rgb/image_resize'),
+                    ('left_image_bi3d', 'front_stereo_camera/left/image_resize'),
                     ('left_camera_info_bi3d',
-                     'front_stereo_camera/left_rgb/camerainfo_resize'),
-                    ('right_image_bi3d', 'front_stereo_camera/right_rgb/image_resize'),
-                    ('right_camera_info_bi3d', 'front_stereo_camera/right_rgb/camerainfo_resize')]
+                     'front_stereo_camera/left/camera_info_resize'),
+                    ('right_image_bi3d', 'front_stereo_camera/right/image_resize'),
+                    ('right_camera_info_bi3d', 'front_stereo_camera/right/camera_info_resize')]
     )
 
     freespace_segmentation_node = ComposableNode(
