@@ -14,24 +14,23 @@
 // limitations under the License.
 //
 // SPDX-License-Identifier: Apache-2.0
-#include "occupancy_grid_projector.hpp"
+
+#include <string>
+#include <utility>
 
 #include "occupancy_grid_projector.cu.hpp"
+#include "occupancy_grid_projector.hpp"
 
-#include "gxf/multimedia/video.hpp"
 #include "gxf/core/parameter_parser_std.hpp"
+#include "gxf/multimedia/video.hpp"
 #include "gxf/std/tensor.hpp"
 #include "gxf/std/timestamp.hpp"
 
-namespace nvidia
-{
-namespace isaac_ros
-{
-namespace freespace_segmentation
-{
+namespace nvidia {
+namespace isaac_ros {
+namespace freespace_segmentation {
 
-gxf_result_t OccupancyGridProjector::registerInterface(gxf::Registrar * registrar)
-{
+gxf_result_t OccupancyGridProjector::registerInterface(gxf::Registrar * registrar) {
   gxf::Expected<void> result;
 
   result &= registrar->parameter(
@@ -68,8 +67,7 @@ gxf_result_t OccupancyGridProjector::registerInterface(gxf::Registrar * registra
   return gxf::ToResultCode(result);
 }
 
-gxf_result_t OccupancyGridProjector::start()
-{
+gxf_result_t OccupancyGridProjector::start() {
   // Extract 3D transform from camera frame to ground frame from parameter
   auto projection = projection_transform_param_.get();
   if (projection.size() != 7) {
@@ -87,8 +85,7 @@ gxf_result_t OccupancyGridProjector::start()
   }
   if (cudaMemcpy(
       translation_device_, translation.data(),
-      sizeof(float) * translation.size(), cudaMemcpyHostToDevice) != cudaSuccess)
-  {
+      sizeof(float) * translation.size(), cudaMemcpyHostToDevice) != cudaSuccess) {
     GXF_LOG_ERROR("Failed to copy translation to device");
     return GXF_FAILURE;
   }
@@ -108,8 +105,7 @@ gxf_result_t OccupancyGridProjector::start()
   }
   if (cudaMemcpy(
       rotation_matrix_device_, rotation_matrix.data(),
-      sizeof(float) * rotation_matrix.size(), cudaMemcpyHostToDevice) != cudaSuccess)
-  {
+      sizeof(float) * rotation_matrix.size(), cudaMemcpyHostToDevice) != cudaSuccess) {
     GXF_LOG_ERROR("Failed to copy rotation matrix to device");
     return GXF_FAILURE;
   }
@@ -131,8 +127,7 @@ gxf_result_t OccupancyGridProjector::start()
   return GXF_SUCCESS;
 }
 
-gxf_result_t OccupancyGridProjector::stop() noexcept
-{
+gxf_result_t OccupancyGridProjector::stop() noexcept {
   if (cudaFree(rotation_matrix_device_) != cudaSuccess) {
     GXF_LOG_ERROR("Failed to free rotation matrix");
     return GXF_FAILURE;
@@ -145,8 +140,7 @@ gxf_result_t OccupancyGridProjector::stop() noexcept
   return GXF_SUCCESS;
 }
 
-gxf_result_t OccupancyGridProjector::tick()
-{
+gxf_result_t OccupancyGridProjector::tick() {
   // Retrieve segmentation mask from Bi3D postprocessor
   const auto maybe_mask_message = mask_receiver_->receive();
   if (!maybe_mask_message) {
@@ -217,8 +211,7 @@ gxf_result_t OccupancyGridProjector::tick()
 
   if (cudaMemcpy(
       origin->pointer(), origin_pose.data(), sizeof(double) * origin_pose.size(),
-      cudaMemcpyHostToDevice) != cudaSuccess)
-  {
+      cudaMemcpyHostToDevice) != cudaSuccess) {
     GXF_LOG_ERROR("Failed to copy origin to device");
     return GXF_FAILURE;
   }
@@ -244,7 +237,7 @@ gxf_result_t OccupancyGridProjector::tick()
 
   // Process segmentation map
   process_segmentation_mask(
-    (float *) segmentation_mask->pointer(), occupancy_grid->data<int8_t>().value(),
+    reinterpret_cast<float *>(segmentation_mask->pointer()), occupancy_grid->data<int8_t>().value(),
     segmentation_mask->video_frame_info().height,
     segmentation_mask->video_frame_info().width,
     grid_height_, grid_width_, grid_resolution_, f_x_, f_y_, rotation_matrix_device_,

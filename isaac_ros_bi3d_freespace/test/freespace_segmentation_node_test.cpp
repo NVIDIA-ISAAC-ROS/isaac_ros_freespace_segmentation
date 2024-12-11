@@ -22,15 +22,12 @@
 // Objective: to cover code lines where exceptions are thrown
 // Approach: send Invalid Arguments for node parameters to trigger the exception
 
+
 TEST(freespace_segmentation_node_test, test_invalid_focal_length)
 {
   rclcpp::init(0, nullptr);
   rclcpp::NodeOptions options;
-  options.arguments(
-  {
-    "--ros-args",
-    "-p", "f_x_:= 0",
-  });
+  options.append_parameter_override("f_x", 0.0);
   EXPECT_THROW(
   {
     try {
@@ -38,6 +35,9 @@ TEST(freespace_segmentation_node_test, test_invalid_focal_length)
         options);
     } catch (const std::invalid_argument & e) {
       EXPECT_THAT(e.what(), testing::HasSubstr("Invalid focal length"));
+      throw;
+    } catch (const rclcpp::exceptions::InvalidParameterValueException & e) {
+      EXPECT_THAT(e.what(), testing::HasSubstr("No parameter value set"));
       throw;
     }
   }, std::invalid_argument);

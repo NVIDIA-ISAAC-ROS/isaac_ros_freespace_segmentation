@@ -17,34 +17,31 @@
 #ifndef NVIDIA_ISAAC_ROS_GXF_EXTENSIONS_OCCUPANCY_GRID_PROJECTOR_HPP_
 #define NVIDIA_ISAAC_ROS_GXF_EXTENSIONS_OCCUPANCY_GRID_PROJECTOR_HPP_
 
-#include <string>
-
 #include <Eigen/Dense>
 
+#include <string>
+#include <vector>
+
+#include "gxf/core/parameter_parser_std.hpp"
 #include "gxf/std/codelet.hpp"
 #include "gxf/std/memory_buffer.hpp"
-#include "gxf/core/parameter_parser_std.hpp"
 #include "gxf/std/receiver.hpp"
 #include "gxf/std/transmitter.hpp"
 
 #include "occupancy_grid_projector.cu.hpp"
 
-namespace nvidia
-{
-namespace isaac_ros
-{
-namespace freespace_segmentation
-{
+namespace nvidia {
+namespace isaac_ros {
+namespace freespace_segmentation {
 
-class OccupancyGridProjector : public gxf::Codelet
-{
-public:
+class OccupancyGridProjector : public gxf::Codelet {
+ public:
   gxf_result_t registerInterface(gxf::Registrar * registrar) override;
   gxf_result_t start() override;
   gxf_result_t tick() override;
   gxf_result_t stop() noexcept override;
 
-private:
+ private:
   gxf::Parameter<gxf::Handle<gxf::Receiver>> mask_receiver_;
   gxf::Parameter<gxf::Handle<gxf::Transmitter>> output_transmitter_;
   gxf::Parameter<gxf::Handle<gxf::Allocator>> allocator_;
